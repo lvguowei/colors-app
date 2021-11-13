@@ -29,22 +29,18 @@ class LoginActivity : AppCompatActivity() {
         }
 
         viewModel.loginClickedLiveData.observe(this) {
-            it.consume {
-                viewModel.login(
-                    binding.userNameEditText.text.toString(),
-                    binding.passwordEditText.text.toString()
-                )
-            }
+            viewModel.login(
+                binding.userNameEditText.text.toString(),
+                binding.passwordEditText.text.toString()
+            )
         }
 
         viewModel.loginLiveData.observe(this) {
-            it.consume {
-                if (this) {
-                    ColorsActivity.start(this@LoginActivity)
-                    finish()
-                } else {
-                    Toast.makeText(this@LoginActivity, "Login failed!", Toast.LENGTH_LONG).show()
-                }
+            if (it) {
+                ColorsActivity.start(this@LoginActivity)
+                finish()
+            } else {
+                Toast.makeText(this@LoginActivity, "Login failed!", Toast.LENGTH_LONG).show()
             }
         }
     }

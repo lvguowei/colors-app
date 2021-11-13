@@ -9,9 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil.setContentView
 import com.guowei.colorsapp.R
 import com.guowei.colorsapp.databinding.ActivityColorsBinding
-import com.guowei.colorsapp.ui.splash.SplashActivity
+import com.guowei.colorsapp.ui.login.LoginActivity
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class ColorsActivity : AppCompatActivity() {
@@ -26,21 +25,27 @@ class ColorsActivity : AppCompatActivity() {
             vm = viewModel
         }
 
-        viewModel.logoutLiveData.observe(this) {
-            it.consume {
-                if (this) {
-                    SplashActivity.start(this@ColorsActivity)
-                    finish()
-                } else {
-                    Toast.makeText(this@ColorsActivity, "logout failed", Toast.LENGTH_LONG).show()
-                }
+        viewModel.isLoggedInLiveData.observe(this) {
+            if (it) {
+                viewModel.init()
+            } else {
+                LoginActivity.start(this@ColorsActivity)
+                finish()
             }
         }
 
-        viewModel.errorLiveData.observe(this) {
-            it.consume {
-                Toast.makeText(this@ColorsActivity, this, Toast.LENGTH_LONG).show()
+        viewModel.logoutLiveData.observe(this) {
+            if (it) {
+                LoginActivity.start(this@ColorsActivity)
+                finish()
+            } else {
+                Toast.makeText(this@ColorsActivity, "logout failed", Toast.LENGTH_LONG).show()
             }
+        }
+
+
+        viewModel.errorLiveData.observe(this) {
+            Toast.makeText(this, it, Toast.LENGTH_LONG).show()
         }
     }
 

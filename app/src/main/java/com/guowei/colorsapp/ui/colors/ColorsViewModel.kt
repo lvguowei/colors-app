@@ -3,15 +3,13 @@ package com.guowei.colorsapp.ui.colors
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import com.guowei.colorsapp.ui.common.utils.Consumable
-import com.guowei.colorsapp.ui.common.utils.toConsumable
+import com.guowei.colorsapp.ui.common.utils.SingleLiveEvent
 import com.guowei.colorsapp.ui.common.viewmodel.BaseViewModel
 import com.guowei.colorsapp.usecase.ColorsUseCase
 import com.guowei.colorsapp.usecase.UserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
@@ -21,6 +19,10 @@ class ColorsViewModel @Inject constructor(
     private val userUseCase: UserUseCase,
     savedStateHandle: SavedStateHandle
 ) : BaseViewModel() {
+
+    private var _isLoggedInLiveData: MutableLiveData<Boolean> =
+        savedStateHandle.getLiveData(IS_LOGGED_IN_LIVEDATA)
+    val isLoggedInLiveData: LiveData<Boolean> get() = _isLoggedInLiveData
 
     private var _uiModelLiveData: MutableLiveData<ColorsUiModel> = savedStateHandle.getLiveData(
         CURRENT_COLOR_LIVEDATA,
@@ -33,15 +35,25 @@ class ColorsViewModel @Inject constructor(
     )
     val uiModelLiveData: LiveData<ColorsUiModel> get() = _uiModelLiveData
 
-    private var _logoutLiveData: MutableLiveData<Consumable<Boolean>> =
-        savedStateHandle.getLiveData(LOGOUT_LIVEDATA)
-    val logoutLiveData: LiveData<Consumable<Boolean>> get() = _logoutLiveData
+    private var _logoutLiveData: SingleLiveEvent<Boolean> = SingleLiveEvent()
+    val logoutLiveData: LiveData<Boolean> get() = _logoutLiveData
 
-    private var _errorLiveData: MutableLiveData<Consumable<String>> =
-        savedStateHandle.getLiveData(ERROR_LIVEDATA)
-    val errorLiveData: LiveData<Consumable<String>> get() = _errorLiveData
+    private var _errorLiveData: SingleLiveEvent<String> = SingleLiveEvent()
+    val errorLiveData: LiveData<String> get() = _errorLiveData
 
     init {
+        userUseCase.isLoggedIn()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { isLoggedIn -> _isLoggedInLiveData.value = isLoggedIn },
+
+                // treat error as not logged in for now
+                { _isLoggedInLiveData.value = false }
+            ).addToDisposable()
+    }
+
+    fun init() {
         Single.zip(
             colorsUseCase.getOrCreate(),
             colorsUseCase.getColorSet()
@@ -66,7 +78,7 @@ class ColorsViewModel @Inject constructor(
                     _uiModelLiveData.value = it
                 },
                 {
-                    _errorLiveData.value = "Failed loading current color!".toConsumable()
+                    _errorLiveData.value = "Failed loading current color!"
                 }
             ).addToDisposable()
     }
@@ -87,7 +99,7 @@ class ColorsViewModel @Inject constructor(
                         currentColorServer = updatedColor
                     )
                 }, {
-                    _errorLiveData.value = "Failed update color!".toConsumable()
+                    _errorLiveData.value = "Failed update color!"
                 })
                 .addToDisposable()
         }
@@ -116,16 +128,15 @@ class ColorsViewModel @Inject constructor(
                 _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = false)
             }
             .subscribe({
-                _logoutLiveData.value = true.toConsumable()
+                _logoutLiveData.value = true
             }, {
-                _logoutLiveData.value = false.toConsumable()
+                _logoutLiveData.value = false
 
             }).addToDisposable()
     }
 
     companion object {
+        private const val IS_LOGGED_IN_LIVEDATA = "is_logged_in"
         private const val CURRENT_COLOR_LIVEDATA = "current_color"
-        private const val LOGOUT_LIVEDATA = "logout"
-        private const val ERROR_LIVEDATA = "error"
     }
 }
