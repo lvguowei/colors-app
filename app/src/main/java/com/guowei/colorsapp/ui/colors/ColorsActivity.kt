@@ -5,32 +5,28 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil.setContentView
-import androidx.lifecycle.Observer
 import com.guowei.colorsapp.R
 import com.guowei.colorsapp.databinding.ActivityColorsBinding
-import com.guowei.colorsapp.ui.common.activity.BaseActivity
-import com.guowei.colorsapp.ui.common.viewmodel.ViewModelFactory
 import com.guowei.colorsapp.ui.splash.SplashActivity
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class ColorsActivity : BaseActivity() {
+@AndroidEntryPoint
+class ColorsActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var viewModelFactory: ViewModelFactory
-
-    private val viewModel: ColorsViewModel by viewModels { viewModelFactory }
+    private val viewModel: ColorsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        injector.inject(this)
 
         with(setContentView<ActivityColorsBinding>(this, R.layout.activity_colors)) {
             lifecycleOwner = this@ColorsActivity
             vm = viewModel
         }
 
-        viewModel.logoutLiveData.observe(this, Observer {
+        viewModel.logoutLiveData.observe(this) {
             it.consume {
                 if (this) {
                     SplashActivity.start(this@ColorsActivity)
@@ -39,13 +35,13 @@ class ColorsActivity : BaseActivity() {
                     Toast.makeText(this@ColorsActivity, "logout failed", Toast.LENGTH_LONG).show()
                 }
             }
-        })
+        }
 
-        viewModel.errorLiveData.observe(this, Observer {
+        viewModel.errorLiveData.observe(this) {
             it.consume {
                 Toast.makeText(this@ColorsActivity, this, Toast.LENGTH_LONG).show()
             }
-        })
+        }
     }
 
     companion object {

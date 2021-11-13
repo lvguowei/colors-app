@@ -5,30 +5,30 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import com.guowei.colorsapp.ui.common.utils.Consumable
 import com.guowei.colorsapp.ui.common.utils.toConsumable
-import com.guowei.colorsapp.ui.common.viewmodel.SavedStateViewModel
+import com.guowei.colorsapp.ui.common.viewmodel.BaseViewModel
 import com.guowei.colorsapp.usecase.UserUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
+@HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val userUseCase: UserUseCase
-) : SavedStateViewModel() {
+    private val userUseCase: UserUseCase,
+    private val savedStateHandle: SavedStateHandle
+) : BaseViewModel() {
 
-    private lateinit var _loginLiveData: MutableLiveData<Consumable<Boolean>>
+    private var _loginLiveData: MutableLiveData<Consumable<Boolean>> =
+        savedStateHandle.getLiveData(LOGIN_LIVEDATA)
     val loginLiveData: LiveData<Consumable<Boolean>> get() = _loginLiveData
 
-    private lateinit var _loadingLiveData: MutableLiveData<Boolean>
+    private var _loadingLiveData: MutableLiveData<Boolean> =
+        savedStateHandle.getLiveData(LOADING_LIVEDATA, false)
     val loadingLiveData: LiveData<Boolean> get() = _loadingLiveData
 
-    private lateinit var _loginClickedLiveData: MutableLiveData<Consumable<Unit>>
+    private var _loginClickedLiveData: MutableLiveData<Consumable<Unit>> =
+        savedStateHandle.getLiveData(LOGIN_CLICKED)
     val loginClickedLiveData: LiveData<Consumable<Unit>> get() = _loginClickedLiveData
-
-    override fun init(savedStateHandle: SavedStateHandle) {
-        _loginLiveData = savedStateHandle.getLiveData(LOGIN_LIVEDATA)
-        _loadingLiveData = savedStateHandle.getLiveData(LOADING_LIVEDATA, false)
-        _loginClickedLiveData = savedStateHandle.getLiveData(LOGIN_CLICKED)
-    }
 
     fun login(username: String, password: String) {
         userUseCase.login(username, password)

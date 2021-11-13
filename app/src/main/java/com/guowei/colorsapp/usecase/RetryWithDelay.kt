@@ -13,12 +13,11 @@ class RetryWithDelay(
 
     private var retryCount: Int = 0
 
-    override fun apply(t: Flowable<Throwable>): Publisher<*> {
-        return t.flatMap { throwable ->
-            return@flatMap if (++retryCount < maxRetries)
+    override fun apply(t: Flowable<Throwable>): Publisher<*> =
+        t.flatMap { throwable ->
+            if (++retryCount < maxRetries)
                 Flowable.timer(delay, unit)
             else
                 Flowable.error<Any>(throwable)
         }
-    }
 }

@@ -4,22 +4,20 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil.setContentView
 import androidx.lifecycle.Observer
 import com.guowei.colorsapp.R
 import com.guowei.colorsapp.databinding.ActivitySplashBinding
 import com.guowei.colorsapp.ui.colors.ColorsActivity
-import com.guowei.colorsapp.ui.common.activity.BaseActivity
-import com.guowei.colorsapp.ui.common.viewmodel.ViewModelFactory
 import com.guowei.colorsapp.ui.login.LoginActivity
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class SplashActivity : BaseActivity() {
+@AndroidEntryPoint
+class SplashActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var viewModelFactory: ViewModelFactory
-
-    private val viewModel: SplashViewModel by viewModels { viewModelFactory }
+    private val viewModel: SplashViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,9 +26,7 @@ class SplashActivity : BaseActivity() {
             lifecycleOwner = this@SplashActivity
         }
 
-        injector.inject(this)
-
-        viewModel.isLoggedInLiveData.observe(this, Observer {
+        viewModel.isLoggedInLiveData.observe(this) {
             it.consume {
                 if (this) {
                     ColorsActivity.start(this@SplashActivity)
@@ -39,7 +35,7 @@ class SplashActivity : BaseActivity() {
                 }
                 finish()
             }
-        })
+        }
     }
 
     companion object {

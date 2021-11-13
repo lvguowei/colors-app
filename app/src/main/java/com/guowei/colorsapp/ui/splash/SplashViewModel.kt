@@ -5,23 +5,25 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import com.guowei.colorsapp.ui.common.utils.Consumable
 import com.guowei.colorsapp.ui.common.utils.toConsumable
-import com.guowei.colorsapp.ui.common.viewmodel.SavedStateViewModel
+import com.guowei.colorsapp.ui.common.viewmodel.BaseViewModel
 import com.guowei.colorsapp.usecase.UserUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
+@HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val userUseCase: UserUseCase
-) : SavedStateViewModel() {
+    userUseCase: UserUseCase,
+    savedStateHandle: SavedStateHandle
+) : BaseViewModel() {
 
-    private lateinit var _isLoggedInLiveData: MutableLiveData<Consumable<Boolean>>
+    private var _isLoggedInLiveData: MutableLiveData<Consumable<Boolean>> =
+        savedStateHandle.getLiveData(IS_LOGGED_IN_LIVEDATA)
     val isLoggedInLiveData: LiveData<Consumable<Boolean>> get() = _isLoggedInLiveData
 
-    override fun init(savedStateHandle: SavedStateHandle) {
-        _isLoggedInLiveData = savedStateHandle.getLiveData(IS_LOGGED_IN_LIVEDATA)
-
+    init {
         userUseCase.isLoggedIn()
             .delay(1, TimeUnit.SECONDS)
             .subscribeOn(Schedulers.io())

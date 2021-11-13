@@ -5,53 +5,54 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import com.guowei.colorsapp.ui.common.utils.Consumable
 import com.guowei.colorsapp.ui.common.utils.toConsumable
-import com.guowei.colorsapp.ui.common.viewmodel.SavedStateViewModel
+import com.guowei.colorsapp.ui.common.viewmodel.BaseViewModel
 import com.guowei.colorsapp.usecase.ColorsUseCase
 import com.guowei.colorsapp.usecase.UserUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 import javax.inject.Inject
 
+@HiltViewModel
 class ColorsViewModel @Inject constructor(
     private val colorsUseCase: ColorsUseCase,
-    private val userUseCase: UserUseCase
-) : SavedStateViewModel() {
+    private val userUseCase: UserUseCase,
+    savedStateHandle: SavedStateHandle
+) : BaseViewModel() {
 
-    private lateinit var _uiModelLiveData: MutableLiveData<ColorsUiModel>
+    private var _uiModelLiveData: MutableLiveData<ColorsUiModel> = savedStateHandle.getLiveData(
+        CURRENT_COLOR_LIVEDATA,
+        ColorsUiModel(
+            currentColorServer = null,
+            currentColorLocal = "#FFFFFF", // default to white
+            colorSet = null,
+            isLoading = false
+        )
+    )
     val uiModelLiveData: LiveData<ColorsUiModel> get() = _uiModelLiveData
 
-    private lateinit var _logoutLiveData: MutableLiveData<Consumable<Boolean>>
+    private var _logoutLiveData: MutableLiveData<Consumable<Boolean>> =
+        savedStateHandle.getLiveData(LOGOUT_LIVEDATA)
     val logoutLiveData: LiveData<Consumable<Boolean>> get() = _logoutLiveData
 
-    private lateinit var _errorLiveData: MutableLiveData<Consumable<String>>
+    private var _errorLiveData: MutableLiveData<Consumable<String>> =
+        savedStateHandle.getLiveData(ERROR_LIVEDATA)
     val errorLiveData: LiveData<Consumable<String>> get() = _errorLiveData
 
-    override fun init(savedStateHandle: SavedStateHandle) {
-        _uiModelLiveData = savedStateHandle.getLiveData(
-            CURRENT_COLOR_LIVEDATA,
-            ColorsUiModel(
-                currentColorServer = null,
-                currentColorLocal = "#FFFFFF", // default to white
-                colorSet = null,
-                isLoading = false
-            )
-        )
-        _logoutLiveData = savedStateHandle.getLiveData(LOGOUT_LIVEDATA)
-        _errorLiveData = savedStateHandle.getLiveData(ERROR_LIVEDATA)
-
+    init {
         Single.zip(
             colorsUseCase.getOrCreate(),
-            colorsUseCase.getColorSet(),
-            BiFunction { current: String, colorSet: List<String> ->
-                ColorsUiModel(
-                    currentColorServer = current,
-                    currentColorLocal = current,
-                    colorSet = colorSet,
-                    isLoading = false
-                )
-            })
+            colorsUseCase.getColorSet()
+        ) { current: String, colorSet: List<String> ->
+            ColorsUiModel(
+                currentColorServer = current,
+                currentColorLocal = current,
+                colorSet = colorSet,
+                isLoading = false
+            )
+        }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {
