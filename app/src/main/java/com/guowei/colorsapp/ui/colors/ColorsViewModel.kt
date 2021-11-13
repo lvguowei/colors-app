@@ -20,8 +20,7 @@ class ColorsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : BaseViewModel() {
 
-    private var _isLoggedInLiveData: MutableLiveData<Boolean> =
-        savedStateHandle.getLiveData(IS_LOGGED_IN_LIVEDATA)
+    private var _isLoggedInLiveData: SingleLiveEvent<Boolean> = SingleLiveEvent()
     val isLoggedInLiveData: LiveData<Boolean> get() = _isLoggedInLiveData
 
     private var _uiModelLiveData: MutableLiveData<ColorsUiModel> = savedStateHandle.getLiveData(
@@ -136,7 +135,6 @@ class ColorsViewModel @Inject constructor(
     }
 
     companion object {
-        private const val IS_LOGGED_IN_LIVEDATA = "is_logged_in"
         private const val CURRENT_COLOR_LIVEDATA = "current_color"
     }
 }

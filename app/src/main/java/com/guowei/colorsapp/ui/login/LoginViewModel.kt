@@ -14,19 +14,20 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val userUseCase: UserUseCase,
-    private val savedStateHandle: SavedStateHandle
 ) : BaseViewModel() {
 
-    private var _loginLiveData: MutableLiveData<Boolean> =
-        savedStateHandle.getLiveData(LOGIN_LIVEDATA)
+    /**
+     * True: login succeeded
+     * False: login failed
+     */
+    private var _loginLiveData: SingleLiveEvent<Boolean> = SingleLiveEvent()
     val loginLiveData: LiveData<Boolean> get() = _loginLiveData
-
-    private var _loadingLiveData: MutableLiveData<Boolean> =
-        savedStateHandle.getLiveData(LOADING_LIVEDATA, false)
-    val loadingLiveData: LiveData<Boolean> get() = _loadingLiveData
 
     private var _loginClickedLiveData: SingleLiveEvent<Unit> = SingleLiveEvent()
     val loginClickedLiveData: LiveData<Unit> get() = _loginClickedLiveData
+
+    private var _loadingLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
+    val loadingLiveData: LiveData<Boolean> get() = _loadingLiveData
 
     fun login(username: String, password: String) {
         userUseCase.login(username, password)
@@ -40,15 +41,11 @@ class LoginViewModel @Inject constructor(
                 },
                 {
                     _loginLiveData.value = false
-                }).addToDisposable()
+                })
+            .addToDisposable()
     }
 
     fun onLoginClicked() {
         _loginClickedLiveData.call()
-    }
-
-    companion object {
-        private const val LOGIN_LIVEDATA = "login"
-        private const val LOADING_LIVEDATA = "loading"
     }
 }
