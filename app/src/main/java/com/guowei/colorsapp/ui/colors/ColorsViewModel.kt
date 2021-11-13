@@ -27,7 +27,7 @@ class ColorsViewModel @Inject constructor(
         CURRENT_COLOR_LIVEDATA,
         ColorsUiModel(
             currentColorServer = null,
-            currentColorLocal = "#FFFFFF", // default to white
+            currentColorLocal = null,
             colorSet = null,
             isLoading = false
         )
@@ -55,15 +55,9 @@ class ColorsViewModel @Inject constructor(
     fun init() {
         Single.zip(
             colorsUseCase.getOrCreate(),
-            colorsUseCase.getColorSet()
-        ) { current: String, colorSet: List<String> ->
-            ColorsUiModel(
-                currentColorServer = current,
-                currentColorLocal = current,
-                colorSet = colorSet,
-                isLoading = false
-            )
-        }
+            colorsUseCase.getColorSet(),
+            ::Pair
+        )
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {
@@ -74,7 +68,20 @@ class ColorsViewModel @Inject constructor(
             }
             .subscribe(
                 {
-                    _uiModelLiveData.value = it
+                    val currentUiModel = _uiModelLiveData.value
+                    val newUiModel = if (currentUiModel?.currentColorLocal == null) {
+                        ColorsUiModel(
+                            currentColorServer = it.first,
+                            currentColorLocal = it.first,
+                            colorSet = it.second,
+                            isLoading = false
+                        )
+                    } else {
+                        currentUiModel.copy(
+                            currentColorServer = it.first, colorSet = it.second, isLoading = false
+                        )
+                    }
+                    _uiModelLiveData.value = newUiModel
                 },
                 {
                     _errorLiveData.value = "Failed loading current color!"

@@ -10,7 +10,7 @@ data class ColorsUiModel(
     // current color on the server
     val currentColorServer: String?,
     // color displayed currently chosen by user
-    val currentColorLocal: String,
+    val currentColorLocal: String?,
     val colorSet: List<String>?,
     val isLoading: Boolean
 ) : Parcelable {
@@ -34,7 +34,12 @@ data class ColorsUiModel(
 
     @IgnoredOnParcel
     val bgColor by lazy {
-        Color.parseColor(currentColorLocal)
+        if (currentColorLocal == null) {
+            // Display white when no user selection yet
+            Color.WHITE
+        } else {
+            Color.parseColor(currentColorLocal)
+        }
     }
 
 
