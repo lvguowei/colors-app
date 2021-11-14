@@ -34,8 +34,8 @@ class ColorsFragment : Fragment() {
         binding.vm = viewModel
         binding.lifecycleOwner = viewLifecycleOwner
 
-        viewModel.isLoggedInLiveData.observe(viewLifecycleOwner) {
-            if (it) {
+        viewModel.isLoggedInLiveData.observe(viewLifecycleOwner) { loggedIn ->
+            if (loggedIn) {
                 viewModel.loadColors()
             } else {
                 findNavController().navigate(R.id.action_colorsFragment_to_loginFragment)
@@ -55,8 +55,8 @@ class ColorsFragment : Fragment() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onStart() {
+        super.onStart()
         viewModel.checkLoggedIn()
     }
 }

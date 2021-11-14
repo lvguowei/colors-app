@@ -12,24 +12,11 @@ data class ColorsUiModel(
     // color displayed currently chosen by user
     val currentColorLocal: String?,
     val colorSet: List<String>?,
-    val isLoading: Boolean
 ) : Parcelable {
 
     @IgnoredOnParcel
-    private val currentIndex by lazy {
+    val currentIndex by lazy {
         colorSet?.indexOf(currentColorLocal) ?: -1
-    }
-
-    @IgnoredOnParcel
-    val prevButtonVisible by lazy {
-        !isLoading && currentIndex > 0
-    }
-
-    @IgnoredOnParcel
-    val nextButtonVisible by lazy {
-        !isLoading && colorSet?.let {
-            currentIndex < it.size - 1
-        } ?: false
     }
 
     @IgnoredOnParcel
@@ -40,12 +27,6 @@ data class ColorsUiModel(
         } else {
             Color.parseColor(currentColorLocal)
         }
-    }
-
-
-    @IgnoredOnParcel
-    val setButtonVisible by lazy {
-        !isLoading && !currentColorServer.equals(currentColorLocal, ignoreCase = true)
     }
 
     @IgnoredOnParcel
@@ -68,5 +49,9 @@ data class ColorsUiModel(
                 copy(currentColorLocal = it[currentIndex - 1])
             }
         }
+    }
+
+    companion object {
+        val Empty: ColorsUiModel = ColorsUiModel(null, null, null)
     }
 }

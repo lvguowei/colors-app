@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import com.guowei.colorsapp.ui.common.utils.SingleLiveEvent
+import com.guowei.colorsapp.ui.common.utils.combineLatest
 import com.guowei.colorsapp.ui.common.viewmodel.BaseViewModel
 import com.guowei.colorsapp.usecase.ColorsUseCase
 import com.guowei.colorsapp.usecase.UserUseCase
@@ -11,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
+import kotlinx.android.parcel.IgnoredOnParcel
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,20 +27,36 @@ class ColorsViewModel @Inject constructor(
 
     private var _uiModelLiveData: MutableLiveData<ColorsUiModel> = savedStateHandle.getLiveData(
         CURRENT_COLOR_LIVEDATA,
-        ColorsUiModel(
-            currentColorServer = null,
-            currentColorLocal = null,
-            colorSet = null,
-            isLoading = false
-        )
+        ColorsUiModel.Empty
     )
     val uiModelLiveData: LiveData<ColorsUiModel> get() = _uiModelLiveData
 
     private var _logoutLiveData: SingleLiveEvent<Boolean> = SingleLiveEvent()
     val logoutLiveData: LiveData<Boolean> get() = _logoutLiveData
 
+    private var _loadingLiveData: MutableLiveData<Boolean> = MutableLiveData(true)
+    val loadingLiveData: LiveData<Boolean> get() = _loadingLiveData
+
     private var _errorLiveData: SingleLiveEvent<String> = SingleLiveEvent()
     val errorLiveData: LiveData<String> get() = _errorLiveData
+
+    val prevButtonVisible: LiveData<Boolean> =
+        _uiModelLiveData.combineLatest(_loadingLiveData) { colorsUiModel, isLoading ->
+            !isLoading && colorsUiModel.currentIndex > 0
+        }
+
+    val nextButtonVisible: LiveData<Boolean> =
+        _uiModelLiveData.combineLatest(_loadingLiveData) { colorsUiModel, isLoading ->
+            !isLoading && colorsUiModel.colorSet?.let {
+                colorsUiModel.currentIndex < it.size - 1
+            } ?: false
+        }
+
+    val setButtonVisible: LiveData<Boolean> =
+        _uiModelLiveData.combineLatest(_loadingLiveData) { colorsUiModel, isLoading ->
+            !isLoading && colorsUiModel.currentColorServer != colorsUiModel.currentColorLocal
+        }
+
 
     fun checkLoggedIn() {
         userUseCase.isLoggedIn()
@@ -61,10 +79,10 @@ class ColorsViewModel @Inject constructor(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {
-                _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = true)
+                _loadingLiveData.value = true
             }
             .doFinally {
-                _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = false)
+                _loadingLiveData.value = false
             }
             .subscribe(
                 {
@@ -73,12 +91,11 @@ class ColorsViewModel @Inject constructor(
                         ColorsUiModel(
                             currentColorServer = it.first,
                             currentColorLocal = it.first,
-                            colorSet = it.second,
-                            isLoading = false
+                            colorSet = it.second
                         )
                     } else {
                         currentUiModel.copy(
-                            currentColorServer = it.first, colorSet = it.second, isLoading = false
+                            currentColorServer = it.first, colorSet = it.second
                         )
                     }
                     _uiModelLiveData.value = newUiModel
@@ -95,10 +112,10 @@ class ColorsViewModel @Inject constructor(
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnSubscribe {
-                    _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = true)
+                    _loadingLiveData.value = true
                 }
                 .doFinally {
-                    _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = false)
+                    _loadingLiveData.value = false
                 }
                 .subscribe({ updatedColor ->
                     _uiModelLiveData.value = _uiModelLiveData.value!!.copy(
@@ -128,13 +145,15 @@ class ColorsViewModel @Inject constructor(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSubscribe {
-                _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = true)
+                _loadingLiveData.value = true
             }
             .doFinally {
-                _uiModelLiveData.value = _uiModelLiveData.value?.copy(isLoading = false)
+                _loadingLiveData.value = false
             }
             .subscribe({
                 _logoutLiveData.value = true
+                // Remember to clear saved state livedata
+                _uiModelLiveData.value = ColorsUiModel.Empty
             }, {
                 _logoutLiveData.value = false
 
