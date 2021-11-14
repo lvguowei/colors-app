@@ -40,7 +40,7 @@ class ColorsViewModel @Inject constructor(
     private var _errorLiveData: SingleLiveEvent<String> = SingleLiveEvent()
     val errorLiveData: LiveData<String> get() = _errorLiveData
 
-    init {
+    fun checkLoggedIn() {
         userUseCase.isLoggedIn()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -52,7 +52,7 @@ class ColorsViewModel @Inject constructor(
             ).addToDisposable()
     }
 
-    fun init() {
+    fun loadColors() {
         Single.zip(
             colorsUseCase.getOrCreate(),
             colorsUseCase.getColorSet(),
