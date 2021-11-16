@@ -34,7 +34,7 @@ class ColorsViewModel @Inject constructor(
     private var _logoutLiveData: SingleLiveEvent<Boolean> = SingleLiveEvent()
     val logoutLiveData: LiveData<Boolean> get() = _logoutLiveData
 
-    private var _loadingLiveData: MutableLiveData<Boolean> = MutableLiveData(true)
+    private var _loadingLiveData: MutableLiveData<Boolean> = MutableLiveData(false)
     val loadingLiveData: LiveData<Boolean> get() = _loadingLiveData
 
     private var _errorLiveData: SingleLiveEvent<String> = SingleLiveEvent()
@@ -42,14 +42,12 @@ class ColorsViewModel @Inject constructor(
 
     val prevButtonVisible: LiveData<Boolean> =
         _uiModelLiveData.combineLatest(_loadingLiveData) { colorsUiModel, isLoading ->
-            !isLoading && colorsUiModel.currentIndex > 0
+            isLoading.not() && colorsUiModel.isAtFirst.not()
         }
 
     val nextButtonVisible: LiveData<Boolean> =
         _uiModelLiveData.combineLatest(_loadingLiveData) { colorsUiModel, isLoading ->
-            !isLoading && colorsUiModel.colorSet?.let {
-                colorsUiModel.currentIndex < it.size - 1
-            } ?: false
+            isLoading.not() && colorsUiModel.isAtLast.not()
         }
 
     val setButtonVisible: LiveData<Boolean> =
@@ -70,40 +68,42 @@ class ColorsViewModel @Inject constructor(
             ).addToDisposable()
     }
 
-    fun loadColors() {
-        Single.zip(
-            colorsUseCase.getOrCreate(),
-            colorsUseCase.getColorSet(),
-            ::Pair
-        )
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe {
-                _loadingLiveData.value = true
-            }
-            .doFinally {
-                _loadingLiveData.value = false
-            }
-            .subscribe(
-                {
-                    val currentUiModel = _uiModelLiveData.value
-                    val newUiModel = if (currentUiModel?.currentColorLocal == null) {
-                        ColorsUiModel(
+
+    /**
+     * Load colors data from server
+     * Note: if has data preserved (e.g. from process death), use that directly.
+     */
+    fun init() {
+        val currentUiModel = _uiModelLiveData.value
+        if (currentUiModel == ColorsUiModel.Empty) {
+            Single.zip(
+                colorsUseCase.getOrCreate(),
+                colorsUseCase.getColorSet(),
+                ::Pair
+            )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe {
+                    _loadingLiveData.value = true
+                }
+                .doFinally {
+                    _loadingLiveData.value = false
+                }
+                .subscribe(
+                    {
+                        val newUiModel = ColorsUiModel(
                             currentColorServer = it.first,
                             currentColorLocal = it.first,
                             colorSet = it.second
                         )
-                    } else {
-                        currentUiModel.copy(
-                            currentColorServer = it.first, colorSet = it.second
-                        )
+                        _uiModelLiveData.value = newUiModel
+                    },
+                    {
+                        _errorLiveData.value = "Failed loading current color!"
                     }
-                    _uiModelLiveData.value = newUiModel
-                },
-                {
-                    _errorLiveData.value = "Failed loading current color!"
-                }
-            ).addToDisposable()
+                ).addToDisposable()
+        }
+
     }
 
     fun updateColor() {

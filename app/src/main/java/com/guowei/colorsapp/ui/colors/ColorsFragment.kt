@@ -36,7 +36,7 @@ class ColorsFragment : Fragment() {
 
         viewModel.isLoggedInLiveData.observe(viewLifecycleOwner) { loggedIn ->
             if (loggedIn) {
-                viewModel.loadColors()
+                viewModel.init()
             } else {
                 findNavController().navigate(R.id.action_colorsFragment_to_loginFragment)
             }

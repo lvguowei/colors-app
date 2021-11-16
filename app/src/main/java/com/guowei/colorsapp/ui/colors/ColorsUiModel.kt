@@ -20,6 +20,16 @@ data class ColorsUiModel(
     }
 
     @IgnoredOnParcel
+    val isAtFirst by lazy {
+        colorSet?.firstOrNull() == currentColorLocal
+    }
+
+    @IgnoredOnParcel
+    val isAtLast by lazy {
+        colorSet?.lastOrNull() == currentColorLocal
+    }
+
+    @IgnoredOnParcel
     val bgColor by lazy {
         if (currentColorLocal == null) {
             // Display white when no user selection yet
@@ -32,7 +42,7 @@ data class ColorsUiModel(
     @IgnoredOnParcel
     val next by lazy {
         colorSet?.let {
-            if (currentIndex == it.size - 1) {
+            if (isAtLast) {
                 null
             } else {
                 copy(currentColorLocal = it[currentIndex + 1])
@@ -43,7 +53,7 @@ data class ColorsUiModel(
     @IgnoredOnParcel
     val previous by lazy {
         colorSet?.let {
-            if (currentIndex == 0) {
+            if (isAtFirst) {
                 null
             } else {
                 copy(currentColorLocal = it[currentIndex - 1])
