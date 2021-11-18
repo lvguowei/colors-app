@@ -21,7 +21,7 @@ class ColorsUiModelTest {
     }
 
     @Test
-    fun `ColorsUiModel tests`() {
+    fun `ColorsUiModel tests - current color in the middle`() {
         val currentColorServer = Colors.colorSet[2]
         val currentColorLocal = Colors.colorSet[3]
         val SUT = ColorsUiModel(currentColorServer, currentColorLocal, Colors.colorSet)
@@ -46,11 +46,15 @@ class ColorsUiModelTest {
     }
 
     @Test
-    fun `ColorsUiModel current is at last`() {
+    fun `ColorsUiModel tests - current color is last`() {
         val currentColorServer = Colors.colorSet[2]
         val currentColorLocal = Colors.colorSet.last()
         val SUT = ColorsUiModel(currentColorServer, currentColorLocal, Colors.colorSet)
 
+        // test next color
+        assertThat(SUT.next).isNull()
+
+        // test previous color
         assertThat(SUT.previous).isEqualTo(
             ColorsUiModel(
                 currentColorServer,
@@ -58,16 +62,15 @@ class ColorsUiModelTest {
                 Colors.colorSet
             )
         )
-
-        assertThat(SUT.next).isNull()
     }
 
     @Test
-    fun `ColorsUiModel current is at first`() {
+    fun `ColorsUiModel tests - current color is first`() {
         val currentColorServer = Colors.colorSet[2]
         val currentColorLocal = Colors.colorSet.first()
         val SUT = ColorsUiModel(currentColorServer, currentColorLocal, Colors.colorSet)
 
+        // test next color
         assertThat(SUT.next).isEqualTo(
             ColorsUiModel(
                 currentColorServer,
@@ -76,6 +79,7 @@ class ColorsUiModelTest {
             )
         )
 
+        // test previous color
         assertThat(SUT.previous).isNull()
     }
 }

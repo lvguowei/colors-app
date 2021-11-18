@@ -48,7 +48,7 @@ class UserUseCaseTest {
     }
 
     @Test
-    fun login() {
+    fun login_success() {
         every { userApi.login(any()) }.returns(Single.just(LoginResponse(token)))
         every { sessionCache.saveToken(any()) } just Runs
         useCase.login(username, password).test().assertComplete()
@@ -67,6 +67,7 @@ class UserUseCaseTest {
         useCase.logout().test().assertComplete()
 
         verify {
+            storageApi.delete(storageId)
             sessionCache.clear()
         }
     }

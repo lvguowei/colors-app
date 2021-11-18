@@ -161,6 +161,6 @@ class ColorsViewModel @Inject constructor(
     }
 
     companion object {
-        private const val CURRENT_COLOR_LIVEDATA = "current_color"
+        const val CURRENT_COLOR_LIVEDATA = "current_color"
     }
 }

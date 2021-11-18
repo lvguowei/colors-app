@@ -3,6 +3,7 @@ package com.guowei.colorsapp.ui.login
 import com.google.common.truth.Truth
 import com.guowei.colorsapp.ui.ViewModelTest
 import com.guowei.colorsapp.usecase.UserUseCase
+import com.guowei.colorsapp.utils.getOrAwaitValue
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -27,14 +28,13 @@ class LoginViewModelTest : ViewModelTest() {
     fun `login succeeded`() {
         every { userUseCase.login(any(), any()) } returns Completable.complete()
         SUT.login("test", "123")
-        Truth.assertThat(SUT.loginLiveData.value).isTrue()
+        Truth.assertThat(SUT.loginLiveData.getOrAwaitValue()).isTrue()
     }
 
     @Test
     fun `login failed`() {
         every { userUseCase.login(any(), any()) } returns Completable.error(Throwable())
         SUT.login("test", "123")
-        Truth.assertThat(SUT.loginLiveData.value).isFalse()
+        Truth.assertThat(SUT.loginLiveData.getOrAwaitValue()).isFalse()
     }
-
 }
